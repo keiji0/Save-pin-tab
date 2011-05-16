@@ -1,0 +1,9 @@
+{
+  "name": "Save pin tab",
+  "version": "0.1",
+  "description": "タブ固定の状態を保存するエクステンション。
+通常通りタブを右クリックして「タブを固定」を設定し、再度タブを開くとタブが固定されます。
+解除したい場合は、同様にタブを右クリックして「タブの固定を解除」で解除されます。",
+  "background_page": "background.html",
+  "permissions": [ "tabs" ]
+}
