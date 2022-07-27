@@ -1,44 +1,56 @@
-var pintab = (function(){
-    var tabkey = 'pintabs';
-    var tabs = localStorage.getItem(tabkey) ?
-        JSON.parse(localStorage.getItem(tabkey)) :
-        {};
-    return {
-        all: function (){
-            return tabs;
-        },
-        set: function (url){
-            tabs[url] = true;
-            localStorage.setItem(tabkey, JSON.stringify(tabs));
-        },
-        get: function (url){
-            return tabs[url];
-        },
-        del: function (url){
-            delete tabs[url];
-            localStorage.setItem(tabkey, JSON.stringify(tabs));
-        }
-    };
-})();
-
-function parseurl(url){
+/**
+ * Pin保存用の正規化されたURLを返す
+ * @param {String} url
+ * @returns 正規化されたURL
+ */
+function normalizeURL(url){
     return url.split('#')[0].split('?')[0];
 }
 
+/**
+ * URL保存する
+ * @param {String} url
+ */
+function savePinURL(url) {
+    chrome.storage.local.set({
+        [normalizeURL(url)]: true
+    });
+}
+
+/**
+ * URLが設定されていればcallbackが呼ばれる
+ * @param {String} url
+ * @param {*} callback
+ */
+function hasPinURL(url, callback) {
+    url = normalizeURL(url);
+    chrome.storage.local.get(url, result => {
+        if (result[url]) {
+            callback();
+        }
+    });
+}
+
+/**
+ * 登録されているURLを削除する
+ * @param {String} url
+ */
+function removePinURL(url) {
+    chrome.storage.local.remove(normalizeURL(url));
+}
+
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-    var url = parseurl(tab.url);
     if (changeInfo.pinned) {
-        pintab.set(url);
+        savePinURL(tab.url);
     } else if ('pinned' in changeInfo) {
-        pintab.del(url);
+        removePinURL(tab.url);
     }
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
     if (changeInfo.url) {
-        var url = parseurl(tab.url);
-        if (pintab.get(url)) {
+        hasPinURL(tab.url, () => {
             chrome.tabs.update(tab.id, { 'pinned':true });
-        }
+        });
     }
 });
